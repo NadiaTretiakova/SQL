@@ -4,10 +4,10 @@ The database scheme consists of four tables:
 Product(maker, model, type)
 PC(code, model, speed, ram, hd, cd, price)
 Laptop(code, model, speed, ram, hd, screen, price)
-Printer(code, model, colour, type, price)
-The Product table contains data on the maker, model number, and type of product ('PC', 'Laptop', or 'Printer'). It is assumed that model numbers in the Product table are unique for all makers and product types. Each personal computer in the PC table is unambiguously identified by a unique code, and is additionally characterised by its model (foreign key referring to the Product table), processor speed (in MHz) – speed field, RAM capacity (in Mb) - ram, hard disk drive capacity (in Gb) – hd, CD-ROM speed (e.g, '4x') - cd, and its price. The Laptop table is similar to the PC table, except that instead of the CD-ROM speed, it contains the screen size (in inches) – screen. For each printer model in the Printer table, its output type (‘y’ for colour and ‘n’ for monochrome) – colour field, printing technology ('Laser', 'Jet', or 'Matrix') – type, and price are specified.
+Printer(code, model, color, type, price)
+The Product table contains data on the maker, model number, and type of product ('PC', 'Laptop', or 'Printer'). It is assumed that model numbers in the Product table are unique for all makers and product types. Each personal computer in the PC table is unambiguously identified by a unique code, and is additionally characterised by its model (foreign key referring to the Product table), processor speed (in MHz) – speed field, RAM capacity (in Mb) - ram, hard disk drive capacity (in Gb) – hd, CD-ROM speed (e.g, '4x') - cd, and its price. The Laptop table is similar to the PC table, except that instead of the CD-ROM speed, it contains the screen size (in inches) – screen. For each printer model in the Printer table, its output type (‘y’ for color and ‘n’ for monochrome) – color field, printing technology ('Laser', 'Jet', or 'Matrix') – type, and price are specified.
 
-===================================================================================================
+========================================================================================================
 
 Exercise: 1
 Find the model number, speed and hard drive capacity for all the PCs with prices below $500.
@@ -16,7 +16,7 @@ Result set: model, speed, hd.
 Query:
 select model, speed, hd from PC where price < 500
 
-==================================================================================================
+========================================================================================================
 
 Exercise: 2 
 List all printer makers. Result set: maker.
@@ -24,9 +24,213 @@ List all printer makers. Result set: maker.
 Query:
 Select distinct maker from Product where type = 'Printer'
 
-=================================================================================================
+========================================================================================================
+
 Exercise: 3 
 Find the model number, RAM and screen size of the laptops with prices over $1000.
 
 Query:
 Select model number, ram, screen from Laptop where price > 1000
+
+========================================================================================================
+
+Exercise: 4 
+Find all records from the Printer table containing data about color printers.
+
+Query:
+SELECT * FROM Printer WHERE color = 'y'
+
+========================================================================================================
+
+Exercise: 5
+Find the model number, speed and hard drive capacity of PCs cheaper than $600 having a 12x or a 24x CD drive.
+
+Query:
+SELECT model, speed, hd FROM PC 
+WHERE price < 600 AND (cd = '12x' OR cd= '24x')
+
+========================================================================================================
+
+Exercise: 6 
+For each maker producing laptops with a hard drive capacity of 10 Gb or higher, find the speed of such laptops. Result set: maker, speed.
+
+Query:
+SELECT DISTINCT a.maker, b.speed
+FROM Product AS a
+LEFT JOIN Laptop AS b
+ON a.model = b.model
+WHERE b.hd >= 10
+
+========================================================================================================
+
+Exercise: 7
+Get the models and prices for all commercially available products (of any type) produced by maker B.
+
+Query:
+SELECT a.model, b.price AS price FROM Product AS a
+RIGHT JOIN PC as b ON a.model = b.model 
+WHERE a.maker = 'B'
+
+UNION
+
+SELECT a.model, c.price AS price FROM Product AS a
+RIGHT JOIN Laptop  AS c ON a.model = c.model 
+WHERE a.maker = 'B'
+
+UNION
+
+SELECT a.model, d.price AS price from Product AS a
+RIGHT JOIN printer AS d ON a.model = d.model
+WHERE a.Maker = 'B'
+
+========================================================================================================
+
+Exercise: 8 
+Find the makers producing PCs but not laptops.
+
+Query:
+SELECT maker FROM Product
+WHERE type = 'PC'
+EXCEPT
+SELECT maker FROM Product
+WHERE type = 'Laptop'
+
+========================================================================================================
+
+Exercise: 9
+Find the makers of PCs with a processor speed of 450 MHz or more. Result set: maker.
+
+Query:
+SELECT DISTINCT a.maker FROM Product AS a
+LEFT JOIN PC AS b ON a.model = b.model
+WHERE b.speed >= 450
+
+========================================================================================================
+Exercise: 10
+Find the printer models having the highest price. Result set: model, price.
+
+Query:
+SELECT model, price
+FROM Printer
+WHERE price = (SELECT MAX(price) 
+ FROM Printer
+)
+
+========================================================================================================
+
+Exercise: 11 
+Find out the average speed of PCs.
+
+Query:
+SELECT AVG (speed) FROM PC
+
+========================================================================================================
+
+Exercise: 12
+Find out the average speed of the laptops priced over $1000.
+
+Query:
+SELECT AVG(speed) FROM Laptop
+WHERE price > 1000
+
+========================================================================================================
+
+Exercise: 13
+Find out the average speed of the PCs produced by maker A.
+
+Query:
+SELECT AVG (a.speed) FROM PC AS a
+LEFT JOIN Product AS b on a.model = b.model
+WHERE b.maker = 'A'
+
+========================================================================================================
+
+Exercise: 14
+For the ships in the Ships table that have at least 10 guns, get the class, name, and country.
+
+Query:
+SELECT a.class, a.name, b.country FROM Ships AS a
+LEFT JOIN Classes AS b ON a.class = b.class
+WHERE b.numGuns >=10
+
+========================================================================================================
+
+Exercise: 15
+Get hard drive capacities that are identical for two or more PCs. 
+Result set: hd.
+
+Query:
+SELECT hd FROM PC
+GROUP BY hd
+HAVING COUNT (hd) >=2
+
+========================================================================================================
+
+Exercise: 17
+Get the laptop models that have a speed smaller than the speed of any PC. 
+Result set: type, model, speed.
+
+Query:
+SELECT DISTINCT c.type, a.model, a.speed FROM Laptop AS a
+LEFT JOIN Product AS c ON a.model = c.model
+WHERE a.speed <
+(SELECT DISTINCT MIN (speed) FROM PC)
+
+========================================================================================================
+
+Exercise: 18
+
+SELECT a.maker, MIN (b.price) as price from Printer as b
+LEFT JOIN Product as a ON a.model = b.model
+WHERE b.color = 'y'
+GROUP BY a.maker
+
+========================================================================================================
+
+Exercise: 19 
+For each maker having models in the Laptop table, find out the average screen size of the laptops he produces. 
+Result set: maker, average screen size.
+
+Query:
+SELECT a.maker, AVG (b.screen) as Avg_size
+FROM Laptop as b
+LEFT JOIN Product as a ON a.model = b.model
+GROUP BY a.maker
+
+========================================================================================================
+
+Exercise: 20 
+Find the makers producing at least three distinct models of PCs.
+Result set: maker, number of PC models.
+
+Query:
+SELECT maker, COUNT (model) as Count_model
+FROM Product
+WHERE type = 'PC'
+GROUP BY maker
+HAVING COUNT (model) >= 3
+
+========================================================================================================
+
+Exercise: 21 
+Find out the maximum PC price for each maker having models in the PC table. Result set: maker, maximum price.
+
+Query:
+SELECT a.maker, MAX (b.price) as max_price 
+FROM Product AS a
+RIGHT JOIN PC AS b ON a.model = b.model
+WHERE a.type = 'PC'
+GROUP BY a.maker
+
+========================================================================================================
+
+Exercise: 22 
+For each value of PC speed that exceeds 600 MHz, find out the average price of PCs with identical speeds.
+Result set: speed, average price.
+
+Query:
+SELECT a.maker, a.type, b.speed, c.speed
+FROM Product as a
+FULL JOIN PC as b on a.model = b.model
+FULL JOIN Laptop as c on a.model = c.model
+WHERE b.speed >= 750
