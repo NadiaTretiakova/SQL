@@ -165,6 +165,17 @@ GROUP BY hd
 HAVING COUNT (hd) >=2
 
 ========================================================================================================
+Exercise: 16 
+Get pairs of PC models with identical speeds and the same RAM capacity. Each resulting pair should be displayed only once, i.e. (i, j) but not (j, i). 
+Result set: model with the bigger number, model with the smaller number, speed, and RAM.
+
+SELECT DISTINCT a.model AS model1, b.model AS model2, a.speed, a.ram 
+FROM PC AS a
+INNER JOIN PC AS b ON a.speed = b.speed AND a.ram = b.ram
+WHERE a.model > b.model
+
+
+========================================================================================================
 
 Exercise: 17
 Get the laptop models that have a speed smaller than the speed of any PC. 
@@ -179,11 +190,18 @@ WHERE a.speed <
 ========================================================================================================
 
 Exercise: 18
+Find the makers of the cheapest color printers.
+Result set: maker, price.
 
-SELECT a.maker, MIN (b.price) as price from Printer as b
-LEFT JOIN Product as a ON a.model = b.model
+Query:
+SELECT DISTINCT a.maker, b.price FROM Product as a
+INNER JOIN Printer as b ON a.model = b.model
 WHERE b.color = 'y'
-GROUP BY a.maker
+AND b.price IN (
+SELECT MIN (b.price) FROM Product as a
+INNER JOIN Printer as b ON a.model = b.model
+WHERE b.color = 'y')
+	
 
 ========================================================================================================
 
@@ -234,3 +252,80 @@ FROM Product as a
 FULL JOIN PC as b on a.model = b.model
 FULL JOIN Laptop as c on a.model = c.model
 WHERE b.speed >= 750
+
+
+========================================================================================================
+
+Exercise: 23
+Get the makers producing both PCs having a speed of 750 MHz or higher and laptops with a speed of 750 MHz or higher. 
+Result set: maker
+
+Query:
+SELECT a.maker FROM Product as a
+LEFT JOIN PC as b on a.model = b.model
+WHERE b.speed>=750
+INTERSECT
+SELECT a.maker FROM Product as a
+LEFT JOIN Laptop as c on a.model = c.model
+WHERE c.speed>=750
+========================================================================================================
+
+Exercise: 24 
+List the models of any type having the highest price of all products present in the database.
+
+QUERY:
+SELECT model FROM (
+SELECT model, price FROM PC
+UNION
+SELECT model, price FROM Laptop
+UNION
+SELECT model, price FROM Printer)a
+WHERE price >=
+(SELECT Max (price) FROM (
+SELECT model, price FROM PC
+UNION
+SELECT model, price FROM Laptop
+UNION
+SELECT model, price FROM Printer) c)
+
+========================================================================================================
+
+Exercise: 25
+Find the printer makers also producing PCs with the lowest RAM capacity and the highest processor speed of all PCs having the lowest RAM capacity. 
+Result set: maker.
+
+SELECT DISTINCT maker FROM (
+       SELECT maker, MAX (speed) as max_speed FROM (
+              SELECT a.maker, c.speed, c.ram FROM Product as a
+              LEFT JOIN Printer as b on a.model = b.model
+              LEFT JOIN PC as c on a.model = c.model
+              WHERE c.ram IN ( SELECT MIN (ram) FROM PC)) c
+        GROUP BY maker)d
+
+========================================================================================================
+
+Exercise: 26 
+Find out the average price of PCs and laptops produced by maker A.
+Result set: one overall average price for all items.
+
+QUERY:
+SELECT AVG (price) as AVG_price FROM(
+SELECT a.maker, a.type, a.model, b.price, b.code FROM Product as a
+RIGHT JOIN PC as b ON a.model = b.model
+WHERE a.maker = 'A'
+UNION
+SELECT a.maker, a.type, a.model, c.price, c.code FROM Product as a
+RIGHT JOIN Laptop as c ON a.model = c.model
+WHERE a.maker = 'A') c
+
+========================================================================================================
+
+Exercise: 28
+Using Product table, find out the number of makers who produce only one model.
+
+Query:
+SELECT COUNT (maker) FROM (
+        SELECT maker, COUNT (model) as qty FROM Product
+        GROUP BY maker)c
+WHERE qty = 1
+
